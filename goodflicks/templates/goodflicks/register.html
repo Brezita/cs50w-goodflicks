@@ -1,0 +1,194 @@
+{% extends "goodflicks/layout.html" %}
+
+{% block body %}
+
+    <form method="POST" action="{% url 'register' %}">
+        {% csrf_token %}
+        <div class="row">
+            <div class="mb-3 col-md-4">
+                <input name="username" id="username" type="text" class="form-control" placeholder="Username" required>
+            </div>
+        </div>
+        <div class="row">
+            <div class="mb-3 col-md-4">
+                <input name="password" id="password" type="password" class="form-control" placeholder="Password" required>             
+            </div>
+        </div>
+        <div class="row">
+            <div class="mb-3 col-md-4">
+                <input name="confirm" id="confirm" type="password" class="form-control" placeholder="Confirm Password" required>
+                <div id="password_validate" style="display:none;"></div>            
+            </div>
+        </div>
+        <div class="row">
+            <div class="mb-3 col-md-4">
+                <input name="email" id="email" type="email" class="form-control" placeholder="Email Address" required> 
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="mb-3 col-md-4">
+                <select name="countries" id="countries" class="form-control" required>
+                <option value="" selected disabled hidden>Select your country</option>
+                {% for key, value in countrylist.items %}
+                <option value="{{ key }}">{{ value }}</option>
+                {% endfor %}
+                </select>
+            </div>
+        </div>
+        
+        <div class="row" id="service-row" style="display:none;">
+            <div class="mb-3 col-md-4">
+                <h3>Please select which of the below services you use. (Please choose at least one.)</h3>
+                <span id="service-container"></span>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="mb-3 col-md-4">
+                <h3>Please select between 1 and 5 of your favourite genres:</h3>
+                {% for key, value in genres.items %}
+                <div class="form-check">
+                    <input class="form-check-input genrecheck" type="checkbox" name="genre" value="{{ key }}" id="Check{{ key }}">
+                    <label class="form-check-label" for="Check{{ key }}">
+                    {{ value }}
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <!-- need to add JS to lock after 5 have been checked; 
+            also to lock form if 0 or 6+ have been selected;
+            formatting: split into 2 columns -->
+
+        <div class="row">
+            <div class="col-md-2">
+                <button type="submit" class="form-control btn btn-primary" id="submit" disabled>Register</button>
+            </div>
+            <div class="col-md-2">
+                <a href="{% url 'login' %}" class="form-control btn btn-primary">Login</a>
+            </div>
+        </div>
+        
+    </form>
+
+    <!-- Tweak the layout so that only register and login show in nav if not logged in 
+    Add space for message
+    Make all fields required
+    Add JS to ensure that whenever the page loads all fields are clear - having issues when navigating back onto page
+    Tweak so that services if empty prompts user to select a country, rather than just appearing-->
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelector('#confirm').addEventListener('keyup', () => passcheck());
+            document.querySelector('#countries').addEventListener('change', () => services());
+            
+            let genres = document.getElementsByClassName('genrecheck');
+            for (var i = 0; i < genres.length; i++) {
+                genres[i].addEventListener('change', () => genrelock());
+            }
+
+            
+        });
+
+        // Check passwords match
+        function passcheck() {
+            let password = document.querySelector('#password');
+            let confirm = document.querySelector('#confirm');
+            let message = document.querySelector('#password_validate')
+
+            if (confirm.value === '') { 
+                message.style.display = "none";
+            } else if (password.value != confirm.value) {
+                message.style.display = "block";
+                message.innerHTML = "Passwords must match.";
+                message.className = "invalid-feedback";
+            } else {
+                message.style.display = "block";
+                message.innerHTML = "Looks good!";
+                message.className = "valid-feedback";
+            }
+        }
+
+        // when a country is selected, reveal services
+        function services() {
+            let country = event.target.value.toLowerCase();
+            let servicerow = document.querySelector('#service-row');
+            let container = document.getElementById('service-container');
+            
+            container.innerHTML = '';
+            if (country === '') {
+                servicerow.style.display = "none";
+            } else {
+                fetch("/getservices")
+                .then(response => response.json())
+                .then(response => {
+                    console.log(response);
+                    for (const item in response) {
+                        if (response[item].indexOf(country) >= 0) {
+                            service = document.createElement("div");
+                            service.className = "form-check";
+                            service.innerHTML= `<input class="form-check-input" type="checkbox" value="${item}" id="Check${item}" name="service">
+                                <label class="form-check-label" for="Check${item}">${item[0].toUpperCase() + item.slice(1)}</label>`
+                            container.appendChild(service);
+                            service.addEventListener('change', () => counter());
+                        }
+                    }
+
+                    servicerow.style.display = "block";
+                });
+            }
+        }
+
+        // Ensure at least one service is checked
+        var servicecounter = 0;
+        function counter() {
+            if (event.target.checked) {
+                servicecounter++;
+            } else {
+                servicecounter--;
+            }
+
+            disableform();
+        }
+
+        // Lock genre boxes after 5 have been checked
+        var genrecounter = 0;
+        function genrelock() {
+            let genres = document.getElementsByClassName('genrecheck');
+
+            if (event.target.checked) {
+                genrecounter++;
+            } else {
+                genrecounter--;
+            }
+
+            if (genrecounter >= 5) {
+                for (var i=0; i<genres.length; i++){
+                    if (genres[i].checked === false) {
+                        genres[i].disabled = true;
+                    }
+                }
+            } else {
+                for (var i=0; i<genres.length; i++){
+                    genres[i].disabled = false;
+                }
+            }
+
+            disableform();
+        }
+
+        var submit =  document.querySelector('#submit');
+        // Enable/disable submit button
+        function disableform() {
+            if (1 <= genrecounter && genrecounter <= 5 && servicecounter >= 1) {
+                submit.disabled = false;
+            } else {
+                submit.disabled = true;
+            }
+            
+
+        }
+    </script>
+
+{% endblock %}

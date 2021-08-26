@@ -1,0 +1,25 @@
+{% extends "goodflicks/layout.html" %}
+
+{% block body %}
+    
+    <div class="movie-holder">
+        <div class="movie-top"> 
+            <h1>{{ data.title }}</h1>
+            <p>{% if data.belongs_to_collection is not None %}Part of the {{ data.belongs_to_collection.name }}{% endif %}</p>
+            <p>Release date: {{ data.release_date}}</p>            
+        </div>
+
+        <div class="movie-middle">
+            <p>Overview: {{ data.overview }}</p>
+            <p>Runtime: {{ data.runtime}} minutes Rating: {{ data.vote_average}} (from {{ data.vote_count }} votes)</p>
+            <h3>Your review:</h3>
+            <!-- add a button here to add a text box in the event that there isn't a review; post asynchronosly via javascript. If there's a review, have an edit underneath -->
+        </div>
+
+        <div class="movie-bottom">
+            <h3>You might also like...</h3>
+        </div>
+
+    </div>
+
+{% endblock %}

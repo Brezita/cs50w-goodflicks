@@ -1,0 +1,13 @@
+{% extends "goodflicks/layout.html" %}
+
+{% block body %}
+
+    <h1>Search results for "{{ parameter }}":</h1>
+
+    <div class="carousel">
+        {% for item, id in data %}
+            <a href="{% url 'movie' id %}"><img src="{{ imgurl }}{{ imgsize }}{{ item }}"></a>
+        {% endfor %}
+    </div>
+
+{% endblock %}

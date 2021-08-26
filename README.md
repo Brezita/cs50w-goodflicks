@@ -1,0 +1,2 @@
+# Goodflicks
+This project is currently in progress, and has been neglected for a few months. Currently, the code is undergoing a huge cleanup as I deal with the effects of scope creep and try to implement principles learned in other coding courses. Please bear with me while I get the code functional and up to a reasonable standard!

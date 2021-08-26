@@ -1,0 +1,344 @@
+{% extends "goodflicks/layout.html" %}
+
+{% block body %}
+
+    {% if message %}
+    <div class="alert alert-danger" role="alert">
+        {{ message }}
+    </div>
+    {% endif %}
+
+    <h2>Profile: {{ user.username }}</h2>
+
+        <div class="row" id="changepass">
+            <div class="md-3 col-md-4">
+                <a href="#" id="showpass">Change Password</a>                  
+            </div>
+        </div>
+        <span id="password-input" style="display:none;">
+            <div class="row">
+                <div class="mb-3 col-md-4">
+                    <input name="oldpassword" id="oldpassword" type="password" class="form-control" placeholder="Old Password" required>             
+                
+                </div>
+            </div>
+            <div class="row">
+                <div class="mb-3 col-md-4">
+                    <input name="password" id="password" type="password" class="form-control" placeholder="New Password" required>             
+                
+                </div>
+            </div>
+            <div class="row">
+                <div class="mb-3 col-md-4">
+                    <input name="confirm" id="confirm" type="password" class="form-control" placeholder="Confirm New Password" required>
+                    <div id="password_validate"></div>            
+                </div>
+            </div>
+            <div class="row">
+                <div class="md-3 col-md-4">
+                    <a href="#" class="btn btn-primary" id="submit-pass">Change Password</a>
+                    <a href="#" class="btn btn-primary" id="hidepass">Cancel</a>
+                </div>
+            </div>
+        </span>
+
+        <!-- ask for old password, and enter new password twice
+        don't show any fields to start with - add with JS when button is clicked -->
+
+        <div class="row">
+            <div class="mb-3 col-md-4">
+               <hr>                
+            </div>
+        </div>
+
+
+        <div class="row">
+            <h4>Email Address:</h4>
+            <div class="mb-3 col-md-4">
+                <input name="email" id="email" type="email" class="form-control" placeholder="Email Address" required> 
+                <a href="#">Change Email</a>               
+            </div>
+        </div>
+
+        <!-- display email address until button is clicked; then show field
+        then make async request (if entered) and go back to showing email -->
+
+        <div class="row">
+            <div class="mb-3 col-md-4">
+               <hr>                
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="mb-3 col-md-4">
+                <h4>Country:</h4>
+                <select name="countries" id="countries" class="form-control" required>
+                {% for key, value in countrylist.items %}
+                <option value="{{ key }}" {% if key == user.country %}selected{% endif %}>{{ value }}</option>
+                {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="mb-3 col-md-4">
+               <hr>                
+            </div>
+        </div>
+        
+        <div class="row" >
+            <div class="mb-3 col-md-4">
+                <h4>Services Used:</h4>
+                <span id="service-container">
+                    {% for key, values in countries.items %}
+                        {% if user.country|lower in values %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="{{ key }}" id="Check{{ key }}" name="service">
+                            <label class="form-check-label" for="Check{{ key }}">{{ key|title }}</label>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </span>
+            </div>
+        </div>
+
+        <!-- this list needs to change when the user's country changes
+        this also needs to show the user's subscriptions as checked
+        if the country changes, get rid of the subscriptions that aren't in that country
+        but make sure any subscriptions available in that country carry over -->
+
+        <div class="row">
+            <div class="mb-3 col-md-4">
+               <hr>                
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="mb-3 col-md-4">
+                <h4>Favourite Genres:</h4>
+                {% for key, value in genres.items %}
+                <div class="form-check">
+                    <input class="form-check-input genrecheck" type="checkbox" name="genre" value="{{ key }}" id="Check{{ key }}">
+                    <label class="form-check-label" for="Check{{ key }}">
+                    {{ value }}
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!--  -->
+
+        <div class="row">
+            <div class="mb-3 col-md-4">
+               <hr>                
+            </div>
+        </div>
+        <!-- need to add JS to lock after 5 have been checked; 
+            also to lock form if 0 or 6+ have been selected;
+            formatting: split into 2 columns -->
+
+{% endblock %}
+    <!-- separate this into multiple forms - each edit will have a different asynchronous JS
+    call associated with it 
+    add a message section for each section so that error codes can display-->
+
+{% block script %}
+    <script>
+        // create a function to place an asynchronous call for each section of form
+        
+        document.addEventListener('DOMContentLoaded', function() {
+
+            // Password fields
+            document.querySelector('#showpass').addEventListener('click', () => showpass());
+            document.querySelector('#hidepass').addEventListener('click', () => showpass());
+            document.querySelector('#confirm').addEventListener('keyup', () => passcheck());            
+            document.querySelector('#submit-pass').addEventListener('click', () => submitpass());
+
+            // Email fields
+
+            document.querySelector('#countries').addEventListener('change', () => services());
+            
+            let genres = document.getElementsByClassName('genrecheck');
+            for (var i = 0; i < genres.length; i++) {
+                genres[i].addEventListener('change', () => genrelock());
+            }
+            
+        });
+
+        // Show or hide password fields
+        function showpass() {
+            let passinput = document.getElementById('password-input');
+
+            if (event.target.id === "showpass") {
+                passinput.style.display = "block";
+                document.querySelector('#changepass').style.display = "none";
+            } else if (event.target.id === "hidepass") {
+                passinput.style.display = "none";
+                document.querySelector('#changepass').style.display = "block";
+            }
+        }
+
+        // Check passwords match
+        function passcheck() {
+            let password = document.querySelector('#password');
+            let confirm = document.querySelector('#confirm');
+            let message = document.querySelector('#password_validate')
+
+            if (confirm.value === '') { 
+                message.style.display = "none";
+            } else if (password.value != confirm.value) {
+                message.style.display = "block";
+                message.innerHTML = "Passwords must match.";
+                message.className = "invalid-feedback";
+                return false;
+            } else {
+                message.style.display = "block";
+                message.innerHTML = "Looks good!";
+                message.className = "valid-feedback";
+                return true;
+            }
+        }
+
+        // Submit new password
+        function submitpass() {
+            if (passcheck() === true) {
+                fetch("profile/password", {
+                    credentials: 'include',
+                    method: 'POST',
+                    mode: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken') 
+                    },
+                    body: JSON.stringify ({
+                        oldpassword: document.getElementById('oldpassword').value,
+                        password: document.getElementById('password').value,
+                        confirm: document.getElementById('confirm').value
+                    })
+                })
+                .then(response => response.json())
+                .then(response => {
+                    console.log(response);
+                    // TO-DO 19/05/21:
+                    // Write back-end code for password update
+                    // If successful, clear the fields and hide them
+                    // and dispaly a success message.
+                    // Otherwise display an error message.                    
+                });
+            } else {
+                console.log("Passwords do not match :(");
+            }
+        }
+
+        // Show email fields
+        function showemail() {
+            
+        }
+
+        // when a country is selected, reveal services
+        function services() {
+            let country = event.target.value.toLowerCase();
+            let servicerow = document.querySelector('#service-row');
+            let container = document.getElementById('service-container');
+            
+            container.innerHTML = '';
+            if (country === '') {
+                servicerow.style.display = "none";
+            } else {
+                fetch("/getservices")
+                .then(response => response.json())
+                .then(response => {
+                    console.log(response);
+                    for (const item in response) {
+                        if (response[item].indexOf(country) >= 0) {
+                            service = document.createElement("div");
+                            service.className = "form-check";
+                            service.innerHTML= `<input class="form-check-input" type="checkbox" value="${item}" id="Check${item}" name="service">
+                                <label class="form-check-label" for="Check${item}">${item[0].toUpperCase() + item.slice(1)}</label>`
+                            container.appendChild(service);
+                            service.addEventListener('change', () => counter());
+                        }
+                    }
+
+                    servicerow.style.display = "block";
+                });
+            }
+        }
+
+        // Ensure at least one service is checked
+        var servicecounter = 0;
+        function counter() {
+            if (event.target.checked) {
+                servicecounter++;
+            } else {
+                servicecounter--;
+            }
+
+            disableform();
+        }
+
+        // Lock genre boxes after 5 have been checked
+        var genrecounter = 0;
+        function genrelock() {
+            let genres = document.getElementsByClassName('genrecheck');
+
+            if (event.target.checked) {
+                genrecounter++;
+            } else {
+                genrecounter--;
+            }
+
+            if (genrecounter >= 5) {
+                for (var i=0; i<genres.length; i++){
+                    if (genres[i].checked === false) {
+                        genres[i].disabled = true;
+                    }
+                }
+            } else {
+                for (var i=0; i<genres.length; i++){
+                    genres[i].disabled = false;
+                }
+            }
+
+            disableform();
+        }
+
+        var submit =  document.querySelector('#submit');
+        // Enable/disable submit button
+        function disableform() {
+            if (1 <= genrecounter && genrecounter <= 5 && servicecounter >= 1) {
+                submit.disabled = false;
+            } else {
+                submit.disabled = true;
+            }
+            
+
+        }
+
+        // Function to fetch CSRF token - instructions for implementation taken from CS50 Discord server
+        function getCookie(name) {
+            if (!document.cookie) {
+            return null;
+            }
+            const token = document.cookie.split(';')
+            .map(c => c.trim())
+            .filter(c => c.startsWith(name + '='));
+
+            if (token.length === 0) {
+            return null;
+            }
+            return decodeURIComponent(token[0].split('=')[1]);
+        }
+    </script>
+
+{% endblock %}
+
+<!-- User should be able to add/remove services and change region, change email,
+change password -->
+
+<!-- Need to make sure selected services/genres show as ticked
+Need to ensure that the checked boxes carry over to changes in region
+Also need to ensure that services not available in new regions do NOT carry over
+Add Javascript to get new form fields  -->

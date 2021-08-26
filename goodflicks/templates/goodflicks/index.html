@@ -1,0 +1,25 @@
+{% extends "goodflicks/layout.html" %}
+
+{% block body %}
+
+    <h3>Hello! Do you like my funky app?</h3>
+
+    <!-- <h3>Films</h3>
+    <div id="carousel">
+        <div class="button-holder">
+            <div class="button"><</div>
+        </div>
+        {% for key, value in data.items %}      
+            <h3>{{key | title}}</h3>  
+            <span class="poster-holder">
+                {% for poster, id in value %}
+                    <a href="{% url 'movie' id %}"><img src="{{ imgurl }}{{ imgsize }}{{ item }}"></a>
+                {% endfor %}
+            </span>
+        {% endfor %}
+        <div class="button-holder">
+            <div class="button">></div>
+        </div>
+    </div> -->
+
+{% endblock %}

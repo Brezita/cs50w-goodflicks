@@ -1,0 +1,54 @@
+body {
+    height: 100%;
+    width: 100%;
+}
+
+header {
+    width: inherit;
+}
+
+#header {
+    display: block;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.container-fluid {
+    margin-left: 25px;
+    margin-right: 25px;
+}
+
+.body {
+    margin-left: 2vw;
+    margin-right: 2vw;
+    padding: 5px;
+}
+
+footer {
+    width: inherit;
+    position: fixed;
+    bottom: 0;
+    background: #bfd89c;
+    text-align: center;
+}
+
+#carousel {
+    height: 220px;
+}
+
+.button-holder {
+    height: inherit;
+    background: #e5e5e5;
+    opacity: 0.5;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.button {
+    font-weight: bold;
+    margin-top: 50%;
+    font-size: 50px;
+    vertical-align: middle;
+    float: left;
+}

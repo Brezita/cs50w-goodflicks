@@ -1,0 +1,34 @@
+{% extends "goodflicks/layout.html" %}
+
+{% block body %}
+
+    <h1>Login</h1>
+    {% if message %}
+    <div class="alert alert-danger" role="alert">
+        {{ message }}
+    </div>
+    {% endif %}
+
+    <form method="POST" action="{% url 'login' %}">
+        {% csrf_token %}
+        <div class="row">
+            <div class="mb-3 col-md-4">
+                <input name="username" id="username" type="text" class="form-control" placeholder="Username" required>
+            </div>
+        </div>
+        <div class="row">
+            <div class="mb-3 col-md-4">
+                <input name="password" id="password" type="password" class="form-control" placeholder="Password" required>             
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-2">
+                <button type="submit" class="form-control btn btn-primary" id="submit">Login</button>
+            </div>
+            <div class="col-md-2">
+                <a href="{% url 'register' %}" class="form-control btn btn-primary">Register</a>
+            </div>
+        </div>
+    </form>
+
+{% endblock %}
